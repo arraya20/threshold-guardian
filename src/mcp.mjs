@@ -1,3 +1,33 @@
+export function parseMcpResponse(text, id, method = "request") {
+  const trimmed = text.trim();
+  const candidates = [];
+  if (trimmed.startsWith("{")) {
+    candidates.push(trimmed);
+  } else {
+    let data = [];
+    const flush = () => {
+      if (data.length) candidates.push(data.join("\n"));
+      data = [];
+    };
+    for (const line of text.split(/\r?\n/)) {
+      if (line === "") flush();
+      else if (line.startsWith("data:")) data.push(line.slice(5).replace(/^ /, ""));
+    }
+    flush();
+  }
+  let fallback;
+  for (const raw of candidates) {
+    let parsed;
+    try { parsed = JSON.parse(raw); } catch { continue; }
+    if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) continue;
+    if (parsed.id === id) return parsed;
+    if (parsed.id === undefined) continue;
+    fallback ??= parsed;
+  }
+  if (fallback) throw new Error(`MCP response id mismatch for ${method}`);
+  throw new Error(`MCP returned no JSON-RPC response for ${method}`);
+}
+
 export async function mcpRequest({ url, sessionId, id, method, params = {}, timeoutMs = 30_000 }) {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeoutMs);
@@ -12,9 +42,7 @@ export async function mcpRequest({ url, sessionId, id, method, params = {}, time
     });
     if (!response.ok) throw new Error(`MCP HTTP ${response.status}: ${await response.text()}`);
     const text = await response.text();
-    const match = text.match(/data:\s*(\{[\s\S]*\})/);
-    if (!match) throw new Error(`MCP returned no SSE message for ${method}`);
-    const message = JSON.parse(match[1]);
+    const message = parseMcpResponse(text, id, method);
     if (message.error) throw new Error(`${method}: ${message.error.message ?? JSON.stringify(message.error)}`);
     return { message, sessionId: response.headers.get("mcp-session-id") ?? sessionId };
   } finally {

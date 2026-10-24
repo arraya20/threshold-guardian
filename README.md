@@ -48,7 +48,7 @@ then set `minNativeWei` above the returned native balance or set
   "thresholds": {
     "minNativeWei": "0",
     "minTokenRaw": "0",
-    "maxGasPriceWei": "10000000000"
+    "maxGasPriceWei": "100000000000"
   }
 }
 ```
@@ -65,5 +65,18 @@ lives in `public/`:
 npx wrangler pages deploy public --project-name pharos-threshold-guardian
 ```
 
-Bind a public custom domain after deploy, then use it as Agent Arena proof
-link. The reviewer can reproduce both outcomes by changing only policy fields.
+Then bind the custom domain in Cloudflare Pages (Custom domains) under the
+`nampharos.web.id` zone. Use that URL as the Agent Arena proof link. The
+reviewer can reproduce both outcomes by changing only policy fields.
+
+### Production notes
+
+- `functions/api/evaluate.js` accepts same-origin requests plus any
+  `https://*.nampharos.web.id` origin. Change `ALLOWED_ORIGIN` if you deploy
+  under another domain.
+- Each evaluation makes about 8 calls to the public Pharos MCP. Add a
+  Cloudflare rate-limiting rule on `POST /api/evaluate` (for example 10
+  requests per minute per IP) to protect that upstream.
+- Default `maxGasPriceWei` in the demo is 100 gwei so it does not sit exactly
+  on the current gas price. The sample wallet holds 0 of the sample token, so
+  the token condition only passes with `minTokenRaw` of `0`.

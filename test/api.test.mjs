@@ -33,3 +33,15 @@ test("rejects cross origin", async () => {
   const response = await onRequest(context({ headers: { Origin: "https://attacker.example", "content-type": "application/json" }, body: JSON.stringify(valid) }));
   assert.equal(response.status, 403);
 });
+
+test("rejects lookalike origins of the production domain", async () => {
+  for (const origin of ["https://nampharos.web.id.evil.example", "https://evilnampharos.web.id", "http://threshold.nampharos.web.id"]) {
+    const response = await onRequest(context({ headers: { Origin: origin, "content-type": "application/json" }, body: JSON.stringify(valid) }));
+    assert.equal(response.status, 403, origin);
+  }
+});
+
+test("accepts the production subdomain origin past the origin gate", async () => {
+  const response = await onRequest(context({ headers: { Origin: "https://threshold.nampharos.web.id", "content-type": "application/json" }, body: JSON.stringify({ ...valid, extra: 1 }) }));
+  assert.equal(response.status, 400);
+});
