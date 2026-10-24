@@ -1,0 +1,14 @@
+{
+  "name": "pharos-threshold-guardian",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Read-only multi-condition execution gate using official Pharos Chain MCP.",
+  "scripts": {
+    "check": "node --check src/abi.mjs && node --check src/mcp.mjs && node --check src/guardian.mjs && node --check functions/api/evaluate.js",
+    "test": "node --test test/*.test.mjs"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
