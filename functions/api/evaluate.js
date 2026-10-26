@@ -1,4 +1,5 @@
 import { evaluateThresholds } from "../../src/guardian.mjs";
+import { InputError } from "../../src/abi.mjs";
 
 const MAX_BODY = 2048;
 const ALLOWED_ORIGIN = /^https:\/\/([a-z0-9-]+\.)?nampharos\.web\.id$/;
@@ -36,7 +37,7 @@ export async function onRequest(context) {
     return json(await evaluateThresholds(input, { timeoutMs: 20_000 }));
   } catch (error) {
     const message = String(error?.message || "Threshold evaluation failed.").slice(0, 300);
-    const status = /Invalid |must be|Unsupported |thresholds/.test(message) ? 400 : 502;
+    const status = error instanceof InputError ? 400 : 502;
     return json({ error: message }, status);
   }
 }

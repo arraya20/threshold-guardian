@@ -45,3 +45,8 @@ test("accepts the production subdomain origin past the origin gate", async () =>
   const response = await onRequest(context({ headers: { Origin: "https://threshold.nampharos.web.id", "content-type": "application/json" }, body: JSON.stringify({ ...valid, extra: 1 }) }));
   assert.equal(response.status, 400);
 });
+
+test("input errors map to 400 via InputError, not message matching", async () => {
+  const response = await onRequest(context({ headers: { "content-type": "application/json" }, body: JSON.stringify({ ...valid, walletAddress: "0x123" }) }));
+  assert.equal(response.status, 400);
+});

@@ -1,5 +1,6 @@
 import {
   ERC20_SELECTORS,
+  InputError,
   MCP_URL,
   PHAROS_CHAIN_ID,
   decodeUint,
@@ -33,16 +34,16 @@ function parseQuantity(value, label) {
 }
 
 function validateInput(input) {
-  if (!input || typeof input !== "object" || Array.isArray(input)) throw new Error("Expected a JSON object");
+  if (!input || typeof input !== "object" || Array.isArray(input)) throw new InputError("Expected a JSON object");
   const allowed = new Set(["walletAddress", "tokenAddress", "thresholds"]);
-  if (Object.keys(input).some((key) => !allowed.has(key))) throw new Error("Unsupported input field");
+  if (Object.keys(input).some((key) => !allowed.has(key))) throw new InputError("Unsupported input field");
   const walletAddress = requireAddress(input.walletAddress, "wallet address");
   const tokenAddress = requireAddress(input.tokenAddress, "token address");
   const thresholds = input.thresholds;
-  if (!thresholds || typeof thresholds !== "object" || Array.isArray(thresholds)) throw new Error("thresholds must be an object");
+  if (!thresholds || typeof thresholds !== "object" || Array.isArray(thresholds)) throw new InputError("thresholds must be an object");
   const keys = new Set(["minNativeWei", "minTokenRaw", "maxGasPriceWei"]);
   if (Object.keys(thresholds).some((key) => !keys.has(key)) || [...keys].some((key) => !(key in thresholds))) {
-    throw new Error("thresholds must include minNativeWei, minTokenRaw, and maxGasPriceWei only");
+    throw new InputError("thresholds must include minNativeWei, minTokenRaw, and maxGasPriceWei only");
   }
   return {
     walletAddress,
@@ -106,7 +107,7 @@ export async function evaluateThresholds(input, { mcpUrl = MCP_URL, timeoutMs = 
       callTool("get_gas_price"),
     ]);
     const bytecode = requireHex(code.code, "get_code");
-    if (bytecode === "0x" || /^0x0*$/.test(bytecode)) throw new Error(`No contract bytecode found at ${request.tokenAddress} at block ${blockNumber}`);
+    if (bytecode === "0x" || /^0x0*$/.test(bytecode)) throw new InputError(`No contract bytecode found at ${request.tokenAddress} at block ${blockNumber}`);
     const tokenDecimalsBig = decodeUint(decimalsResult.result, "decimals()");
     if (tokenDecimalsBig > 255n) throw new Error("decimals() returned an invalid value");
     const tokenDecimals = Number(tokenDecimalsBig);

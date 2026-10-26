@@ -80,3 +80,7 @@ reviewer can reproduce both outcomes by changing only policy fields.
 - Default `maxGasPriceWei` in the demo is 100 gwei so it does not sit exactly
   on the current gas price. The sample wallet holds 0 of the sample token, so
   the token condition only passes with `minTokenRaw` of `0`.
+
+## License
+
+MIT. See `LICENSE`.
